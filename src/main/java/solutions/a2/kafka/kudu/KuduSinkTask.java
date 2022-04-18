@@ -20,6 +20,7 @@ import org.apache.kudu.client.SessionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import solutions.a2.kafka.kudu.jmx.KuduSinkMetrics;
 import solutions.a2.utils.ExceptionUtils;
 import solutions.a2.utils.Version;
 
@@ -38,7 +39,8 @@ public class KuduSinkTask extends SinkTask {
 	private int schemaType;
 	private String kuduTableName;
 	private boolean caseSensitiveNames;
-	KuduTableWrapper ktw;
+	private KuduTableWrapper ktw;
+	private KuduSinkMetrics ksm;
 
 	@Override
 	public String version() {
@@ -47,8 +49,10 @@ public class KuduSinkTask extends SinkTask {
 
 	@Override
 	public void start(Map<String, String> props) {
-		LOGGER.info("Starting Kudu Sink Task for connector '{}'", props.get("name"));
+		final String connectorName = props.get("name");
+		LOGGER.info("Starting Kudu Sink Task for connector '{}'", connectorName);
 		KuduSinkConnectorConfig config = new KuduSinkConnectorConfig(props);
+		ksm = new KuduSinkMetrics(connectorName);
 		batchSize = config.getInt(ParamConstants.BATCH_SIZE_PARAM);
 		kuduTableName = config.getString(ParamConstants.KUDU_TABLE_PARAM);
 		caseSensitiveNames = config.getBoolean(ParamConstants.CASE_SENSITIVE_NAMES_PARAM);
@@ -71,14 +75,16 @@ public class KuduSinkTask extends SinkTask {
 
 	@Override
 	public void put(Collection<SinkRecord> records) {
+		long sessionCreateNanos = System.nanoTime();
 		final KuduSession kuduSession = kuduClient.newSession();
+		sessionCreateNanos = System.nanoTime() - sessionCreateNanos;
 		kuduSession.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
-		long flushTime = 0;
-		long deleteTime = 0;
-		long upsertTime = 0;
 		int deleteCount = 0;
+		long deleteNanos = 0;
 		int upsertCount = 0;
-		int batchCount = 0;
+		long upsertNanos = 0;
+		int flushCount = 0;
+		long flushNanos = 0;
 		int processedRecords = 0;
 		final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
 		for (SinkRecord record : records) {
@@ -120,11 +126,11 @@ public class KuduSinkTask extends SinkTask {
 				final long nanosStart = System.nanoTime();
 				if ("d".equals(opType)) {
 					ktw.delete(kuduSession, record);
-					deleteTime += System.nanoTime() - nanosStart;
+					deleteNanos += System.nanoTime() - nanosStart;
 					deleteCount++;
 				} else {
 					ktw.upsert(kuduSession, record);
-					upsertTime += System.nanoTime() - nanosStart;
+					upsertNanos += System.nanoTime() - nanosStart;
 					upsertCount++;
 				}
 			} catch (KuduConnectException kce) {
@@ -136,24 +142,28 @@ public class KuduSinkTask extends SinkTask {
 					new OffsetAndMetadata(record.kafkaOffset()));
 			processedRecords++;
 			if (processedRecords > batchSize) {
-				flushTime += flushChanges(kuduSession, currentOffsets);
-				batchCount++;
+				flushNanos += flushChanges(kuduSession, currentOffsets);
+				flushCount++;
 				processedRecords = 0;
 			}
 		}
 		if (processedRecords > 0) {
-			flushTime += flushChanges(kuduSession, currentOffsets);
-			batchCount++;
+			flushNanos += flushChanges(kuduSession, currentOffsets);
+			flushCount++;
 		}
+		long sessionCloseNanos = System.nanoTime();
 		try {
 			kuduSession.close();
 		} catch (KuduException ke) {
 			LOGGER.error(ExceptionUtils.getExceptionStackTrace(ke));
 			throw new ConnectException(ke);
 		}
-		//TODO
-		//TODO sent metrics to JMX
-		//TODO
+		sessionCloseNanos = System.nanoTime() - sessionCloseNanos;
+		ksm.addMetrics(
+				sessionCreateNanos, sessionCloseNanos,
+				upsertCount, upsertNanos,
+				deleteCount, deleteNanos,
+				flushCount, flushNanos);
 	}
 
 	@Override
