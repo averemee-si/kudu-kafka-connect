@@ -1,0 +1,233 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>solutions.a2.kudu</groupId>
+	<artifactId>a2-kudu-kafka-connect</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+	<name>a2-kudu-kafka-connect</name>
+	<url>https://a2-solutions.eu</url>
+	<description>
+		Apache Kudu Kafka Connect Connector(s)
+	</description>
+
+	<organization>
+		<name>A2 Rešitve, d.o.o.</name>
+		<url>https://a2-solutions.eu/</url>
+	</organization>
+	<issueManagement>
+		<url>https://github.com/averemee-si/kudu-kafka-connect/issues</url>
+		<system>GitHub</system>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>Apache License</name>
+			<url>https://a2-solutions.eu/licenses/apache/LICENSE.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<kudu.version>1.16.0</kudu.version>
+		<kafka.version>3.0.1</kafka.version>
+		<kafka.connect.maven.plugin.version>0.12.0</kafka.connect.maven.plugin.version>
+		<slf4j.version>1.7.32</slf4j.version>
+		<junit.version>5.8.2</junit.version>
+	</properties>
+
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.apache.kudu/kudu-client -->
+		<dependency>
+			<groupId>org.apache.kudu</groupId>
+			<artifactId>kudu-client</artifactId>
+			<version>${kudu.version}</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.kafka/connect-api/ -->
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>connect-api</artifactId>
+			<version>${kafka.version}</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api/ -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+          				</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>io.confluent</groupId>
+				<version>${kafka.connect.maven.plugin.version}</version>
+				<artifactId>kafka-connect-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>kafka-connect</goal>
+						</goals>
+						<configuration>
+							<title>Kafka Connect for Apache Kudu</title>
+							<documentationUrl>https://github.com/averemee-si/kudu-kafka-connect</documentationUrl>
+							<description>
+								JDBC sink connector optimized for Apache Kudu.
+							</description>
+							<logo>logos/a2-oracdc.png</logo>
+
+							<supportProviderName>A2 Rešitve, d.o.o.</supportProviderName>
+							<supportSummary>Includes installation, and configuration assistance</supportSummary>
+							<supportUrl>https://a2-solutions.eu/</supportUrl>
+							<supportLogo>logos/a2-solutions.png</supportLogo>
+
+							<ownerUsername>a2solutions</ownerUsername>
+							<ownerType>organization</ownerType>
+							<ownerName>A2 Rešitve, d.o.o.</ownerName>
+							<ownerUrl>https://a2-solutions.eu/</ownerUrl>
+							<ownerLogo>logos/a2-solutions.png</ownerLogo>
+
+							<dockerNamespace></dockerNamespace>
+							<dockerName></dockerName>
+							<dockerTag></dockerTag>
+
+							<componentTypes>
+								<componentType>sink</componentType>
+							</componentTypes>
+
+							<confluentControlCenterIntegration>
+								true
+							</confluentControlCenterIntegration>
+
+							<tags>
+								<tag>Apache Kudu</tag>
+								<tag>Kudu</tag>
+								<tag>Apache Impala</tag>
+								<tag>Impala</tag>
+								<tag>ingest</tag>
+								<tag>collect</tag>
+								<tag>Hadoop</tag>
+								<tag>data lake</tag>
+							</tags>
+
+							<requirements>
+								<requirement>Apache Kudu</requirement>
+							</requirements>
+
+							<deliveryGuarantee>
+								<deliveryGuarantee>exactlyOnce</deliveryGuarantee>
+							</deliveryGuarantee>
+
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>src/assembly/standalone.xml</descriptor>
+					</descriptors>
+					<archive>
+						<manifest>
+							<mainClass/>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!--
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			-->
+		</plugins>
+	</build>
+</project>
