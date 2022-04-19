@@ -29,18 +29,18 @@ public interface KuduSinkMetricsMBean {
 	public String getKuduSessionsCloseTime();
 	public long getTotalRecordsCount();
 	public long getUpsertRecordsCount();
-	public long getUpsertTimeMillis();
+	public long getUpsertMillis();
 	public String getUpsertTime();
 	public int getUpsertPerSecond();
 	public long getDeleteRecordsCount();
-	public long getDeleteTimeMillis();
+	public long getDeleteMillis();
 	public String getDeleteTime();
 	public int getDeletePerSecond();
 	public int getKuduFlushesCount();
-	public long getKuduFlushesTimeMillis();
+	public long getKuduFlushesMillis();
 	public String getKuduFlushesTime();
 	public int getKuduFlushesPerSecond();
-	public long getKuduProcessingTimeMillis();
+	public long getKuduProcessingMillis();
 	public String getKuduProcessingTime();
 
 }

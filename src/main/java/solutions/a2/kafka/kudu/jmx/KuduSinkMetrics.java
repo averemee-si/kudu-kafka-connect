@@ -169,7 +169,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		return upsertCount;
 	}
 	@Override
-	public long getUpsertTimeMillis() {
+	public long getUpsertMillis() {
 		return upsertNanos / 1_000_000;
 	}
 	@Override
@@ -192,7 +192,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		return deleteCount;
 	}
 	@Override
-	public long getDeleteTimeMillis() {
+	public long getDeleteMillis() {
 		return deleteNanos / 1_000_000;
 	}
 	@Override
@@ -215,7 +215,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		return flushCount;
 	}
 	@Override
-	public long getKuduFlushesTimeMillis() {
+	public long getKuduFlushesMillis() {
 		return flushNanos / 1_000_000;
 	}
 	@Override
@@ -234,7 +234,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		}
 	}
 	@Override
-	public long getKuduProcessingTimeMillis() {
+	public long getKuduProcessingMillis() {
 		return (sessionCreateNanos + sessionCloseNanos + flushNanos + upsertNanos + deleteNanos) / 1_000_000;
 	}
 	@Override
