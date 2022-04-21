@@ -2,11 +2,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>solutions.a2.kudu</groupId>
 	<artifactId>a2-kudu-kafka-connect</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>a2-kudu-kafka-connect</name>
 	<url>https://a2-solutions.eu</url>
 	<description>
-		Apache Kudu Kafka Connect Connector(s)
+		Apache Kudu Kafka Connect Sink Connector
 	</description>
 
 	<organization>
@@ -25,6 +25,13 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
+	<scm>
+		<url>https://github.com/averemee-si/kudu-kafka-connect</url>
+		<connection>scm:git:git://github.com/averemee-si/kudu-kafka-connect.git</connection>
+		<developerConnection>scm:git:git@github.com:averemee-si/kudu-kafka-connect.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
