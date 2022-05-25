@@ -18,9 +18,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kudu.ColumnSchema;
 import org.apache.kudu.client.Delete;
@@ -83,31 +86,31 @@ public class KuduTableWrapper {
 				wrapper.kuduTables.add(client.openTable(tableName));
 				wrapper.kuduToKafka.add(new HashMap<>());
 				//Map Kudu table columns to fields in topic
-				final Map<String, Integer> topicKeys = new HashMap<>();
+				final Map<String, String> topicKeys = new HashMap<>();
 				if (record.keySchema() != null &&
 						record.keySchema().fields() != null &&
 						record.keySchema().fields().size() > 0) {
-					for (int i = 0; i < record.keySchema().fields().size(); i++) {
+					for (Field keyField : record.keySchema().fields()) {
+						final String fieldName = keyField.name(); 
 						if (caseSensitive) {
-							topicKeys.put(
-									record.keySchema().fields().get(i).name(), i);
+							topicKeys.put(fieldName, fieldName);
 						} else {
-							topicKeys.put(
-									record.keySchema().fields().get(i).name().toLowerCase(), i);
+							topicKeys.put(fieldName.toLowerCase(Locale.ROOT), fieldName);
 						}
 					}
 				}
-				final Map<String, Integer> topicValues = new HashMap<>();
+				final Map<String, String> topicValues = new HashMap<>();
 				if (record.valueSchema() != null &&
 						record.valueSchema().fields() != null &&
 						record.valueSchema().fields().size() > 0) {
-					for (int i = 0; i < record.valueSchema().fields().size(); i++) {
-						if (caseSensitive) {
-							topicValues.put(
-									record.valueSchema().fields().get(i).name(), i);
+					for (Field valueField : record.valueSchema().fields()) {
+						final String fieldName = valueField.name(); 
+						if (caseSensitive && !topicKeys.containsKey(fieldName)) {
+							topicValues.put(fieldName, fieldName);
 						} else {
-							topicValues.put(
-									record.valueSchema().fields().get(i).name().toLowerCase(), i);
+							if (!topicKeys.containsKey(fieldName.toLowerCase(Locale.ROOT))) {
+								topicValues.put(fieldName.toLowerCase(Locale.ROOT), fieldName);
+							}
 						}
 					}
 				}
@@ -117,14 +120,14 @@ public class KuduTableWrapper {
 					final MappingHolder holder = new MappingHolder();
 					if (topicKeys.containsKey(column.getName())) {
 						holder.keyOrValue = true;
-						holder.kafkaName = record.keySchema().fields().get(topicKeys.get(column.getName())).name();
+						holder.kafkaName = topicKeys.get(column.getName());
 						if (LOGGER.isDebugEnabled()) {
 							LOGGER.debug("Kudu table '{}' column '{}' is mapped to Kafka keySchema field '{}'",
 								wrapper.kuduTables.get(0).getName(), column.getName(), holder.kafkaName);
 						}
 					} else if (topicValues.containsKey(column.getName())) {
 						holder.keyOrValue = false;
-						holder.kafkaName = record.valueSchema().fields().get(topicValues.get(column.getName())).name();
+						holder.kafkaName = topicValues.get(column.getName());
 						if (LOGGER.isDebugEnabled()) {
 							LOGGER.debug("Kudu table '{}' column '{}' is mapped to Kafka valueSchema field '{}'",
 								wrapper.kuduTables.get(0).getName(), column.getName(), holder.kafkaName);
@@ -190,11 +193,23 @@ public class KuduTableWrapper {
 			for (ColumnSchema cs : kuduTable.getSchema().getColumns()) {
 				final String columnName = cs.getName();
 				if (columnMapping.containsKey(columnName)) {
-					final Object columnValue;
+					Object columnValue;
 					if (columnMapping.get(columnName).keyOrValue) {
 						columnValue = keyStruct.get(columnMapping.get(columnName).kafkaName);
 					} else {
-						columnValue = valueStruct.get(columnMapping.get(columnName).kafkaName);
+						try {
+							columnValue = valueStruct.get(columnMapping.get(columnName).kafkaName);
+						} catch (NullPointerException npe) {
+							LOGGER.error("NullPointerException while getting mapping for Kudu column '{}'!", columnName);
+							LOGGER.error("Values of Key fields for this message are:");
+							for (Field keyField : keyStruct.schema().fields()) {
+								final String fieldName = keyField.name();
+								LOGGER.error("\t\"{}\"\t=\t'{}'", fieldName, keyStruct.get(fieldName));
+							}
+							LOGGER.error("Kudu column '{}' is mapped to Kafka value STRUCT field '{}'",
+									columnName, columnMapping.get(columnName).kafkaName);
+							throw new ConnectException(npe);
+						}
 					}
 					if (columnValue == null) {
 						row.setNull(columnName);
