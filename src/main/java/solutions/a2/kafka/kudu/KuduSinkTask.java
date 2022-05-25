@@ -124,7 +124,7 @@ public class KuduSinkTask extends SinkTask {
 			}
 			try {
 				final long nanosStart = System.nanoTime();
-				if ("d".equals(opType)) {
+				if ("d".equalsIgnoreCase(opType)) {
 					ktw.delete(kuduSession, record);
 					deleteNanos += System.nanoTime() - nanosStart;
 					deleteCount++;
