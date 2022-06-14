@@ -136,11 +136,32 @@ public class KuduTableWrapper {
 						missed = true;
 					}
 					if (missed) {
-						if ((column.isKey() || !column.isNullable()) &&
-								column.getDefaultValue() == null) {
-							LOGGER.error("Kudu table '{}': non-null or key column '{}' is missed in Kafka Topic '{}'!",
-									tableName, column.getName(), record.topic());
-							throw new KuduConnectException("Column " + column.getName() + " is missed in Kafka topic!");
+						if (column.isKey()) {
+							LOGGER.error("Kudu table '{}': key column '{}' is missed in Kafka Topic '{}' at offset {}!",
+									tableName, column.getName(), record.topic(), record.kafkaOffset());
+							throw new KuduConnectException(
+									"Column " + column.getName() + " is missed in Kafka topic at offset " + record.kafkaOffset() + "!");
+						} else if (!column.isNullable() && column.getDefaultValue() == null) {
+							LOGGER.error("Kudu table '{}': non-null column without default value '{}' is missed in Kafka Topic '{}' at offset {}!",
+									tableName, column.getName(), record.topic(), record.kafkaOffset());
+							final Struct keyStruct = (Struct) record.key();
+							LOGGER.error("Values of Key fields for this message are:");
+							for (Field keyField : keyStruct.schema().fields()) {
+								final String fieldName = keyField.name();
+								LOGGER.error("\t\"{}\"\t=\t'{}'", fieldName, keyStruct.get(fieldName));
+							}
+							if (record.valueSchema() == null ||
+									record.value() == null ||
+									record.valueSchema().fields() == null) {
+								//Delete event
+								//Just try this:
+								holder.keyOrValue = false;
+								//TODO - better detection is required...
+								holder.kafkaName = column.getName();
+							} else {
+								throw new KuduConnectException(
+										"Column " + column.getName() + " is missed in Kafka topic at offset " + record.kafkaOffset() + "!");
+							}
 						} else if (column.getDefaultValue() != null) {
 							LOGGER.debug("Default value will be used for column '{}' in table '{}'.",
 									column.getName(), tableName);
