@@ -79,6 +79,7 @@ public class KuduSinkConnector extends SinkConnector {
 		// Only one task currently!
 		final List<Map<String, String>> configs = new ArrayList<>();
 		final Map<String, String> props = new HashMap<>();
+		props.putAll(config.originalsStrings());
 		config.values().forEach((k, v) -> {
 			if (v instanceof Boolean) {
 				props.put(k, ((Boolean) v).toString());
