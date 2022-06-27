@@ -118,6 +118,9 @@ public class KuduSinkTask extends SinkTask {
 					}
 				}
 				LOGGER.debug("Operation type from headers is {}.", opType);
+				if (record.value() == null) {
+					opType = "d";
+				}
 			} else { // if (schemaType == ParamConstants.SCHEMA_TYPE_INT_DEBEZIUM)
 				opType = ((Struct) record.value()).getString("op");
 				LOGGER.debug("Operation type from payload is {}.", opType);
