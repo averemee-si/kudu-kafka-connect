@@ -184,7 +184,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		} else if (upsertNanos == 0) {
 			return Integer.MAX_VALUE;
 		} else {
-			return (int) (upsertCount / (upsertNanos / 1_000_000_000));
+			return (int) Math.round((upsertCount / upsertNanos) * 1_000_000_000);
 		}
 	}
 	@Override
@@ -207,7 +207,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		} else if (deleteNanos == 0) {
 			return Integer.MAX_VALUE;
 		} else {
-			return (int) (deleteCount / (deleteNanos / 1_000_000_000));
+			return (int) Math.round((deleteCount / deleteNanos) * 1_000_000_000);
 		}
 	}
 	@Override
@@ -230,7 +230,7 @@ public class KuduSinkMetrics implements KuduSinkMetricsMBean {
 		} else if (flushNanos == 0) {
 			return Integer.MAX_VALUE;
 		} else {
-			return (int) (flushCount / (flushNanos / 1_000_000_000));
+			return (int) Math.round((flushCount / flushNanos) * 1_000_000_000);
 		}
 	}
 	@Override
