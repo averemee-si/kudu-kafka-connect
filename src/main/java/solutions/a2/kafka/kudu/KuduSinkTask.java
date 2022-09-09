@@ -41,6 +41,7 @@ public class KuduSinkTask extends SinkTask {
 	private boolean caseSensitiveNames;
 	private KuduTableWrapper ktw;
 	private KuduSinkMetrics ksm;
+	private long idleMillis;
 
 	@Override
 	public String version() {
@@ -66,6 +67,7 @@ public class KuduSinkTask extends SinkTask {
 			kuduClient = new KuduClient
 				.KuduClientBuilder(config.getString(ParamConstants.KUDU_MASTERS_PARAM))
 				.build();
+			idleMillis = System.currentTimeMillis();
 			LOGGER.info("Connected to Kudu masters at {}", config.getString(ParamConstants.KUDU_MASTERS_PARAM));
 		} catch (Exception ke) {
 			LOGGER.error(ExceptionUtils.getExceptionStackTrace(ke));
@@ -153,6 +155,7 @@ public class KuduSinkTask extends SinkTask {
 		if (processedRecords > 0) {
 			flushNanos += flushChanges(kuduSession, currentOffsets);
 			flushCount++;
+			idleMillis = System.currentTimeMillis();
 		}
 		long sessionCloseNanos = System.nanoTime();
 		try {
