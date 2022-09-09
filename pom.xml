@@ -40,7 +40,7 @@
 		<kudu.version>1.16.0</kudu.version>
 		<kafka.version>3.0.1</kafka.version>
 		<kafka.connect.maven.plugin.version>0.12.0</kafka.connect.maven.plugin.version>
-		<slf4j.version>1.7.32</slf4j.version>
+		<slf4j.version>2.0.0</slf4j.version>
 		<junit.version>5.8.2</junit.version>
 	</properties>
 
@@ -63,6 +63,12 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-reload4j/ -->
+ 		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-reload4j</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
 
